@@ -36,7 +36,7 @@
 #' #change draw order and which data is displayed
 #' qmap(qm,order=c(2,3,5))
 #' #add a basemap
-#' qm<-qmap(qm,basemap="1m_aerial", resolution = 800))
+#' qm<-qmap(qm,basemap="1m_aerial", resolution = 800)
 #' }
 qmap <- function(..., extent = NULL, order = 1:length(mapdata), 
                  colors = 1:length(mapdata), fill = FALSE, prj = TRUE, 
@@ -47,7 +47,6 @@ qmap <- function(..., extent = NULL, order = 1:length(mapdata),
     
     basemap <- match.arg(basemap)
     if(basemap == "none") {basemap <- NULL}
-    
     mapdata <- build_map_data(...)
     # Test Projections
     if (prj) {
@@ -88,7 +87,11 @@ qmap <- function(..., extent = NULL, order = 1:length(mapdata),
     
     
     # match colors to length of mapdata
-    colors <- rep(colors, length(mapdata))[1:length(mapdata)]
+    
+    if(length(colors) != length(mapdata)){
+      message("number of specified colors does not match number of data layers and some colors are repeated.")
+      colors <- rep(colors, length(mapdata))[1:length(mapdata)]
+    }
     
     qmap_obj <- list(map_data = mapdata, map_extent = bbx, orig_extent = bbx, 
                      draw_order = order, 
@@ -129,9 +132,6 @@ plot.qmap <- function(x, ...) {
     # Creates the plot
     first <- TRUE
     if (!is.null(basemap)) {
-        #image(basemap, red = 1, green = 2, blue = 3, 
-        #      xlim = as.numeric(bbx[1, ]), ylim = as.numeric(bbx[2, ]), 
-        #      axes = TRUE, ...)
         bm<-get_basemap(x,basemap,width=resolution)
         plotRGB(bm, ext = extent(c(as.numeric(bbx[1, ]),
                                         as.numeric(bbx[2, ]))),
@@ -141,16 +141,11 @@ plot.qmap <- function(x, ...) {
     for (i in 1:length(order)) {
         if (first) {
             if (get_sp_type(mapdata[[order[i]]]) == "grid") {
-                #browser()
-                #if (!is.null(values)) {
-                #  image(mapdata[[order[i]]], xlim = as.numeric(bbx[1, ]), 
-                #        ylim = as.numeric(bbx[2,]), axes = TRUE, col = col_tbl, 
-                #        breaks = c(0, values), ...)
-                #} else {
-                  plot(mapdata[[order[i]]], xlim = as.numeric(bbx[1, ]), 
-                        ylim = as.numeric(bbx[2,]), axes = TRUE, legend=FALSE,
-                       ...)
-                #}
+              plot(mapdata[[order[i]]],ext=as.matrix(bbx), axes = TRUE, 
+                      ...)
+              #plot(mapdata[[order[i]]], xlim = as.numeric(bbx[1, ]), 
+              #     ylim = as.numeric(bbx[2,]), axes = TRUE, 
+              #     ...)
                 first <- FALSE
             } else if (get_sp_type(mapdata[[order[i]]]) == "polygon") {
                 if (fill) {
@@ -170,12 +165,8 @@ plot.qmap <- function(x, ...) {
             }
         } else {
             if (get_sp_type(mapdata[[order[i]]]) == "grid") {
-                #if (!is.null(values)) {
-                #  image(mapdata[[order[i]]], add = TRUE, col = col_tbl, 
-                #        breaks = c(0, values), ...)
-                #} else {
-                  plot(mapdata[[order[i]]], add = TRUE, legend=FALSE, ...)
-                #}
+                  plot(mapdata[[order[i]]],ext=as.matrix(bbx), add = TRUE, ...)
+                  #plot(mapdata[[order[i]]], add = TRUE, ...)
             } else if (get_sp_type(mapdata[[order[i]]]) == "polygon") {
                 if (fill) {
                   plot(mapdata[[order[i]]], col = colors[i], add = TRUE)
@@ -193,19 +184,16 @@ plot.qmap <- function(x, ...) {
     
 }
 
-#' Default printing of a qmap object
+#' Default plotting of a qmap object 
 #' 
-#' Prints the summary of a qmap object
+#' Plots a qmap object
 #' 
 #' @param x input qmap class to print
-#' @param ... options passed to summary
+#' @param ... options passed to plot
 #' @method print qmap
 #' @export
 print.qmap <- function(x, ...) {
-    print_it <- list(map_data = names(x$map_data), map_extent = x$map_extent, 
-                     draw_order = x$draw_order, colors = x$colors,
-                     fill = x$fill, label = x$label)
-    return(print_it)
+    plot.qmap(x, ...)
 }
 
 #' Get a basemap from USGS National Map
@@ -231,7 +219,7 @@ print.qmap <- function(x, ...) {
 #' 
 #' @importFrom httr GET
 #' @importFrom raster stack
-#' @export
+#' @keywords internal
 get_basemap <- function(qmap_obj = NULL, base = c("1m_aerial", "topo"), 
                         width = 300, outfile = tempfile()) {
     base <- match.arg(base)
@@ -272,8 +260,6 @@ get_basemap <- function(qmap_obj = NULL, base = c("1m_aerial", "topo"),
     tmp_jpgw <- paste0(tmp, ".jpgw")
     r<-GET(request_url, httr::write_disk(tmp_jpg,overwrite=T))
     make_jpw(tmp_jpgw, big_bbx, width)
-    #img <- rgdal::readGDAL(tmp_jpg, silent = TRUE, p4s = p4s)
     img <- stack(tmp_jpg) #some goofiness with zooming and plotRGB
-    #file.remove(tmp_jpg, tmp_jpgw)
     return(img)
 } 

@@ -113,7 +113,7 @@ zoom_it <- function(qmap_obj, loc, zoom_perc, out = FALSE, pan = FALSE) {
     }
     
     qmap_obj$map_extent <- me
-    plot(qmap_obj)
+    plot.qmap(qmap_obj)
     return(qmap_obj)
 }
 
@@ -146,7 +146,7 @@ zoom_test<-function(qmap_obj,map_extent){
 }
 
 #' sp bbox to poly
-#' @param sp
+#' @param sp an sp object
 #' @keywords internal
 bbox_to_sp <- function(sp) {
     bbox <- bbox(sp)
