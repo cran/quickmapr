@@ -39,6 +39,7 @@ test_that("interactivity works", {
 })
 
 
+
 test_that("f() returns qmap", {
   expect_is(f(x),"qmap")
 })
@@ -54,8 +55,8 @@ test_that("l() works",{
 })
 
 test_that("projection checks work",{
-  expect_error(qmap(samp_diff_proj,lake), "Projections do not match. Use prj=FALSE to override projection check.\n\n This is not recommended. Re-project to common projection instead.")
-  expect_error(qmap(lake_no_proj),"No projection info.  Use prj=FALSE to override projection check.")
+  expect_warning(qmap(samp_diff_proj,lake), "Projections do not exactly match.\n\nDouble check you projuection and re-project to common projection instead.")
+  expect_warning(qmap(lake_no_proj),"No projection info.  Use prj=FALSE to override projection check.")
 })
 
 test_that("map_extent is assigned correctly with single input",{
@@ -63,10 +64,24 @@ test_that("map_extent is assigned correctly with single input",{
   expect_is(qmap(lake,extent = samples)$map_extent,"data.frame")
 })
 
+# loc arg not currently working
+i_loc_poly <- list(x = 1804201, y = 630302.2)
+i_loc_line <- list(x = 1803746, y = 629495.9)
+i_loc_pt <- list(x = 1804096, y = 631634.4)
+i_loc_raster <- list(x = 1802098, y = 630442.4)
+
 test_that("i() works", {
   expect_error(i(),"Requires a valid qmap_obj.")
-  expect_null(i(x,"lake",loc=location))
-  expect_null(i(x,"samples",loc=location))
-  expect_null(i(x,"elev",loc=location))
-  expect_null(i(x,"width",loc=location))
+  expect_is(i(x,"lake",loc=i_loc_poly), "list")
+  expect_is(i(x,"samples",loc=i_loc_pt), "list")
+  expect_is(i(x,"elev",loc=i_loc_raster), "list")
+  expect_is(i(x,"width",loc=i_loc_line), "list")
+})
+
+test_that("m() works",{
+  expect_error(m(), "Requires a valid qmap_obj.")
+})
+
+test_that("s() works",{
+  expect_error(s(), "Requires a valid qmap_obj.")
 })

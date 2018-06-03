@@ -52,10 +52,10 @@ qmap <- function(..., extent = NULL, order = 1:length(mapdata),
     if (prj) {
         prjs <- lapply(mapdata, sp::proj4string)
         if (length(unique(prjs)) > 1) {
-            stop("Projections do not match. Use prj=FALSE to override projection check.\n\n This is not recommended. Re-project to common projection instead.", 
+            warning("Projections do not exactly match.\n\nDouble check you projuection and re-project to common projection instead.", 
                 call. = FALSE)
         } else if (any(is.na(prjs))) {
-            stop("No projection info.  Use prj=FALSE to override projection check.", 
+            warning("No projection info.  Use prj=FALSE to override projection check.", 
                 call. = FALSE)
         }
     }
@@ -81,11 +81,6 @@ qmap <- function(..., extent = NULL, order = 1:length(mapdata),
     }
     bbx <- data.frame(bbx)
     
-    values <- NULL
-    col_tbl <- NULL
-    
-    
-    
     # match colors to length of mapdata
     
     if(length(colors) != length(mapdata)){
@@ -95,11 +90,9 @@ qmap <- function(..., extent = NULL, order = 1:length(mapdata),
     
     qmap_obj <- list(map_data = mapdata, map_extent = bbx, orig_extent = bbx, 
                      draw_order = order, 
-                     colors = colors, fill = fill, map = NULL, 
-                     basemap = basemap, col_tbl = col_tbl, values = values,
-                     resolution = resolution)
+                     colors = colors, fill = fill, 
+                     basemap = basemap, resolution = resolution)
     class(qmap_obj) <- "qmap"
-    #qmap_obj$map = plot.qmap(qmap_obj)
     plot.qmap(qmap_obj)
     return(qmap_obj)
 }
@@ -125,8 +118,6 @@ plot.qmap <- function(x, ...) {
     colors <- x$colors
     bbx <- x$map_extent
     basemap <- x$basemap
-    col_tbl <- x$col_tbl
-    values <- x$values
     resolution <- x$resolution
     
     # Creates the plot
@@ -232,7 +223,8 @@ get_basemap <- function(qmap_obj = NULL, base = c("1m_aerial", "topo"),
         p4s <- proj4string(qmap_obj$map_data[[1]])
     }
     if (base == "1m_aerial") {
-        server_url <- "http://raster.nationalmap.gov/arcgis/rest/services/Orthoimagery/USGS_EROS_Ortho_NAIP/ImageServer/exportImage?"
+        warning("The service this basemap was served from has been sunset and the aerials are no longer supported.  A topo is returned instead.")
+        server_url <- "http://services.arcgisonline.com/arcgis/rest/services/USA_Topo_Maps/MapServer/export?"
     } else if (base == "topo") {
         server_url <- "http://services.arcgisonline.com/arcgis/rest/services/USA_Topo_Maps/MapServer/export?"
     }
